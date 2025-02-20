@@ -1,13 +1,14 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 interface HotelCardProps {
   id: number
   name: string
   image: string
-  rating: number
+  rating: number | string
   city: string
   country: string
-  price: number
+  price: number | string // Modificado para aceptar string también
 }
 
 const HotelCard = ({ id, name, image, rating, city, country, price }: HotelCardProps) => {
@@ -18,63 +19,66 @@ const HotelCard = ({ id, name, image, rating, city, country, price }: HotelCardP
       return 'https://placehold.co/600x400/gray/white?text=Hotel+Image'
     }
 
-    // Log para debugging
-    console.log('Original image URL:', imageUrl)
-
-    // Si la URL ya es completa, usarla directamente
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl
     }
 
-    // Remover slash inicial si existe
     const cleanPath = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl
-
-    // Construir URL completa
     const fullUrl = `https://hotels-api.academlo.tech/${cleanPath}`
-    console.log('Constructed URL:', fullUrl)
     return fullUrl
   }
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.log('Image failed to load:', image)
     setImgError(true)
     e.currentTarget.src = 'https://placehold.co/600x400/gray/white?text=Hotel+Image'
   }
 
+  // Asegurar que rating sea un número
+  const numericRating = typeof rating === 'string' ? parseFloat(rating) : rating
+  const displayRating = !isNaN(numericRating) ? numericRating : 0
+
+  // Asegurar que price sea un número
+  const numericPrice = typeof price === 'string' ? parseFloat(price) : price
+  const displayPrice = !isNaN(numericPrice) ? numericPrice : 0
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="relative h-48">
-        <img 
+    <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:scale-105">
+      <div className="h-40 bg-gray-200 relative">
+        <img
           src={getImageUrl(image)}
           alt={name}
           className="w-full h-full object-cover"
           onError={handleImageError}
         />
       </div>
-      <div className="p-4">
-        <h3 className="text-xl font-semibold text-gray-800">{name}</h3>
-        <div className="flex items-center mt-2">
+      <div className="p-3">
+        <h3 className="text-lg font-semibold mb-1 truncate text-gray-800">{name}</h3>
+        <div className="flex items-center mb-1">
           {[...Array(5)].map((_, i) => (
-            <span 
+            <span
               key={i}
-              className={`text-lg ${i < Math.floor(rating) ? 'text-yellow-400' : 'text-gray-300'}`}
+              className={`text-lg ${i < Math.floor(displayRating) ? 'text-yellow-400' : 'text-gray-300'}`}
             >
               ★
             </span>
           ))}
-          <span className="ml-2 text-sm text-gray-600">({rating})</span>
-        </div>
-        <p className="mt-2 text-gray-600">{city}, {country}</p>
-        <div className="mt-4 flex justify-between items-center">
-          <span className="text-xl font-bold text-gray-800">
-            ${price.toLocaleString()}
+          <span className="ml-1 text-sm text-gray-600">
+            ({typeof displayRating === 'number' ? displayRating.toFixed(1) : '0.0'})
           </span>
-          <a
-            href={`/hotels/${id}`}
-            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
+        </div>
+        <p className="text-sm text-gray-600 mb-2">
+          {city}, {country}
+        </p>
+        <div className="flex justify-between items-center">
+          <span className="text-lg font-bold text-red-500">
+            ${displayPrice}
+          </span>
+          <Link
+            to={`/hotels/${id}`}
+            className="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
           >
             See more...
-          </a>
+          </Link>
         </div>
       </div>
     </div>

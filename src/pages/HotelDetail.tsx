@@ -3,29 +3,9 @@ import { Map, Marker } from 'pigeon-maps'
 import { useParams } from 'react-router-dom'
 import axios from '../hooks/useAxios'
 import { useAuthStore } from '../store/auth.store'
-import Comments from '../components/CommentsSection'
+import Reviews from '../components/reviews/Reviews'
+import StarRating from '../components/reviews/StarRating'
 
-// Función para obtener la URL de la imagen de forma segura
-const getImageUrl = (imageUrl: string | undefined) => {
-  if (!imageUrl || typeof imageUrl !== 'string') {
-    console.log('Invalid image URL:', imageUrl)
-    return 'https://placehold.co/600x400/gray/white?text=Hotel+Image'
-  }
-
-  try {
-    // Si la URL es completa, la devuelve directamente
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      return imageUrl
-    }
-
-    // Remueve la barra inicial si existe y construye la URL completa
-    const cleanPath = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl
-    return `https://hotels-api.academlo.tech/${cleanPath}`
-  } catch (error) {
-    console.error('Error processing image URL:', error)
-    return 'https://placehold.co/600x400/gray/white?text=Hotel+Image'
-  }
-}
 
 interface Review {
   id: number
@@ -62,32 +42,57 @@ const HotelDetail = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const getImageUrl = (imageUrl: string | undefined) => {
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      return 'https://placehold.co/600x400/gray/white?text=Hotel+Image'
+    }
+    
+    try {
+
+       // Limpiar la URL de dobles slashes y espacios
+    const cleanUrl = imageUrl.trim().replace(/\/+/g, '/')
+
+      // Si la URL ya es completa, usarla directamente
+      // Si ya es una URL completa, retornarla
+      if (cleanUrl.startsWith('http')) {
+        return cleanUrl
+      }
+      
+      // Remover slash inicial si existe
+      const cleanPath = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl
+      
+      // Construir URL completa
+      const baseUrl = 'https://hotels-api.academlo.tech'
+      return `${baseUrl}/${cleanPath}`
+    } catch (error) {
+      console.error('Error processing image URL:', error)
+      return 'https://placehold.co/600x400/gray/white?text=Hotel+Image'
+    }
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true)
-        // Obtener detalles del hotel
-        const hotelResponse = await axios.get(`/hotels/${id}`)
-        console.log('Raw hotel data:', hotelResponse.data)
-        const hotelData: HotelData = {
-          ...hotelResponse.data,
-          rating: Number(hotelResponse.data.rating) || 0,
-          price: Number(hotelResponse.data.price) || 0,
-          images: Array.isArray(hotelResponse.data.images)
-            ? hotelResponse.data.images
-                .map((img: any) => {
-                  if (typeof img === 'string') {
-                    return getImageUrl(img)
-                  } else if (typeof img?.url === 'string') {
-                    return getImageUrl(img.url)
-                  }
-                  return null
-                })
-                .filter(Boolean)
-            : hotelResponse.data.image
-            ? [getImageUrl(hotelResponse.data.image)]
-            : [],
-          // Reviews de ejemplo
+        // Fetch hotel details
+        const response = await axios.get(`/hotels/${id}`)
+        console.log('Raw hotel data:', response.data)
+
+        const hotelData = {
+          ...response.data,
+          rating: Number(response.data.rating) || 0,
+          price: Number(response.data.price) || 0,
+          // Transformar las imágenes si es necesario
+          images: Array.isArray(response.data.images) 
+            ? response.data.images.map((img: any) => {
+                if (typeof img === 'string') {
+                  return getImageUrl(img)
+                } else if (typeof img?.url === 'string') {
+                  return getImageUrl(img.url)
+                }
+                return null
+              }).filter(Boolean)
+            : [getImageUrl(response.data.image)],
           reviews: [
             {
               id: 1,
@@ -126,20 +131,25 @@ const HotelDetail = () => {
             }
           ]
         }
+        
         console.log('Transformed hotel data:', hotelData)
         setHotel(hotelData)
 
-        // Obtener otros hoteles en el mismo país
+        // Fetch other hotels in the same country
         const hotelsResponse = await axios.get('/hotels')
         const countryHotels = hotelsResponse.data
-          .filter((h: HotelData) => h.city.country === hotelData.city.country && h.id !== Number(id))
+          .filter((h: HotelData) => 
+            h.city.country === hotelData.city.country && 
+            h.id !== Number(id)
+          )
           .slice(0, 3)
           .map((h: any) => ({
             ...h,
             rating: Number(h.rating) || 0,
             price: Number(h.price) || 0,
-            image: getImageUrl(h.image)
+            image: h.image ? getImageUrl(h.image) : null
           }))
+        
         setOtherHotels(countryHotels)
       } catch (err) {
         console.error('Error fetching data:', err)
@@ -158,7 +168,7 @@ const HotelDetail = () => {
       setError('Please login to make a reservation')
       return
     }
-
+    
     try {
       await axios.post('/bookings', {
         hotelId: id,
@@ -175,20 +185,14 @@ const HotelDetail = () => {
   }
 
   const renderStars = (rating: number) => {
-    const numRating = Number(rating) || 0
     return [...Array(5)].map((_, index) => (
       <span
         key={index}
-        className={`text-lg ${index < Math.floor(numRating) ? 'text-yellow-400' : 'text-gray-300'}`}
+        className={`text-lg ${index < Math.floor(rating) ? 'text-yellow-400' : 'text-gray-300'}`}
       >
         ★
       </span>
     ))
-  }
-
-  const formatRating = (rating: number) => {
-    const numRating = Number(rating) || 0
-    return numRating.toFixed(2)
   }
 
   if (loading) {
@@ -209,36 +213,47 @@ const HotelDetail = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Información principal del hotel */}
+      {/* Main Hotel Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
         <div>
           <h1 className="text-3xl font-bold mb-4">{hotel.name}</h1>
+          <p className="text-gray-600">
+            {hotel.city.name}, {hotel.city.country}
+          </p>
+          {/* Usar StarRating aquí para el hotel principal */}
+          <div className="flex items-center">
+            <StarRating rating={hotel.rating} />
+          </div>
           <div className="flex items-center mb-4">
             {renderStars(hotel.rating)}
-            <span className="ml-2 text-gray-600">({formatRating(hotel.rating)})</span>
+            <span className="ml-2 text-gray-600">({hotel.rating.toFixed(2)})</span>
           </div>
 
-          {/* Imágenes del hotel */}
+          {/* Hotel Images */}
           <div className="relative h-[400px] rounded-lg overflow-hidden mb-6">
             <img
-              src={hotel.images?.[currentImageIndex] || getImageUrl(hotel.image)}
-              alt={hotel.name}
+              src={hotel.images[currentImageIndex]}
+              alt={`${hotel.name}`}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.src = 'https://placehold.co/600x400/gray/white?text=Hotel+Image'
+              }}
             />
-            {hotel.images && hotel.images.length > 1 && (
+            {hotel.images.length > 1 && (
               <>
                 <button
-                  onClick={() =>
-                    setCurrentImageIndex(prev => (prev === 0 ? hotel.images.length - 1 : prev - 1))
-                  }
+                  onClick={() => setCurrentImageIndex(prev => 
+                    prev === 0 ? hotel.images.length - 1 : prev - 1
+                  )}
                   className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-red-500 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-600"
                 >
                   &#8249;
                 </button>
                 <button
-                  onClick={() =>
-                    setCurrentImageIndex(prev => (prev === hotel.images.length - 1 ? 0 : prev + 1))
-                  }
+                  onClick={() => setCurrentImageIndex(prev => 
+                    prev === hotel.images.length - 1 ? 0 : prev + 1
+                  )}
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-red-500 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-600"
                 >
                   &#8250;
@@ -247,44 +262,58 @@ const HotelDetail = () => {
             )}
           </div>
 
-          {/* Descripción del hotel */}
+          {/* Hotel Description */}
           <div className="prose max-w-none mb-6">
             <p className="text-gray-700">{hotel.description}</p>
           </div>
 
-          {/* Mapa de ubicación */}
+          {/* Location Map */}
           <div className="rounded-lg overflow-hidden h-[300px]">
-            <Map height={300} defaultCenter={[48.8566, 2.3522]} defaultZoom={13}>
-              <Marker width={50} color="#ef4444" anchor={[48.8566, 2.3522]} />
+            <Map
+              height={300}
+              defaultCenter={[48.8566, 2.3522]}
+              defaultZoom={13}
+            >
+              <Marker
+                width={50}
+                color="#ef4444"
+                anchor={[48.8566, 2.3522]}
+              />
             </Map>
           </div>
         </div>
 
-        {/* Formulario de reserva */}
+        {/* Reservation Form */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold text-red-500 mb-6">Reservation</h2>
           <form onSubmit={handleReservation} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Check-in</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Check-in
+              </label>
               <input
                 type="date"
                 value={checkIn}
-                onChange={e => setCheckIn(e.target.value)}
+                onChange={(e) => setCheckIn(e.target.value)}
                 className="w-full p-2 border rounded-md"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Check-out</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Check-out
+              </label>
               <input
                 type="date"
                 value={checkOut}
-                onChange={e => setCheckOut(e.target.value)}
+                onChange={(e) => setCheckOut(e.target.value)}
                 className="w-full p-2 border rounded-md"
                 required
               />
             </div>
-            <div className="text-xl font-bold text-gray-800 my-4">${hotel.price} per night</div>
+            <div className="text-xl font-bold text-gray-800 my-4">
+              ${hotel.price} per night
+            </div>
             <button
               type="submit"
               className="w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
@@ -295,51 +324,70 @@ const HotelDetail = () => {
         </div>
       </div>
 
-      {/* Sección de comentarios */}
-      <div className="mb-12">
-        <Comments hotelId={id} />
-      </div>
+    
 
-      {/* Sección de otros hoteles */}
+      
+
+      {/* Other Hotels Section */}
       <div>
         <h2 className="text-2xl font-bold mb-6">
           Other Hotels in <span className="text-red-500">{hotel.city.country}</span>
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {otherHotels.map(otherHotel => (
-            <div
-              key={otherHotel.id}
-              className="bg-white rounded-lg shadow-lg overflow-hidden transition-transform hover:scale-105"
+          {otherHotels.map((otherHotel) => (
+            <div 
+              key={otherHotel.id} 
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-transform"
             >
-              <div className="h-48 overflow-hidden">
+              <div className="h-48 bg-gray-200 relative">
                 <img
-                  src={getImageUrl(otherHotel.image)}
+                  src={otherHotel.image || 'https://placehold.co/600x400/gray/white?text=Hotel+Image'}
                   alt={otherHotel.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement
+                    target.src = 'https://placehold.co/600x400/gray/white?text=Hotel+Image'
+                  }}
                 />
+                {!otherHotel.image && (
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-xl">
+                    Hotel Image
+                  </div>
+                )}
               </div>
               <div className="p-4">
                 <h3 className="text-xl font-semibold mb-2">{otherHotel.name}</h3>
+                  {/* Usar StarRating aquí para cada hotel en la lista */}
+                  <div className="flex items-center mb-2">
+                  <StarRating rating={otherHotel.rating} />
+                </div>
                 <div className="flex items-center mb-2">
                   {renderStars(otherHotel.rating)}
-                  <span className="ml-2 text-gray-600">({formatRating(otherHotel.rating)})</span>
+                  <span className="ml-2 text-gray-600">
+                    ({otherHotel.rating.toFixed(2)})
+                  </span>
                 </div>
-                <p className="text-gray-600 mb-3">
+                <p className="text-gray-600 mb-4">
                   {otherHotel.city.name}, {otherHotel.city.country}
                 </p>
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold">${otherHotel.price}</span>
                   <a
                     href={`/hotels/${otherHotel.id}`}
-                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
                   >
-                    See more...
+                    Ver detalles
                   </a>
                 </div>
               </div>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Sección de Reviews */}
+      <div className="border-t border-gray-200 mt-8 p-6">
+      <Reviews hotelId={Number(id)} />
       </div>
     </div>
   )
