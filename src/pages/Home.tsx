@@ -18,7 +18,7 @@ interface Hotel {
   images: {
     url: string
   }[]
-  image?: string // Para mantener compatibilidad con la API actual
+  image?: string 
 }
 
 const Home = () => {
@@ -35,23 +35,23 @@ const Home = () => {
         setIsLoading(true)
         const response = await axiosInstance.get<Hotel[]>('/hotels')
         
-        // Log para debugging
+        
         console.log('Raw API response:', response.data[0])
         
         const transformedHotels = response.data.map(hotel => {
-          // Log para cada hotel
+        
           console.log('Processing hotel:', hotel.name, 'Image:', hotel.image)
           
           return {
             ...hotel,
-            // Asegurarnos de que la imagen tenga la ruta correcta
+            
             image: hotel.image?.startsWith('http') 
               ? hotel.image 
               : `https://hotels-api.academlo.tech/${hotel.image?.replace(/^\//, '')}`
           }
         })
         
-        // Log del resultado transformado
+        
         console.log('Transformed hotel example:', transformedHotels[0])
         
         setHotels(transformedHotels)

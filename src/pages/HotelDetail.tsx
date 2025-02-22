@@ -49,19 +49,18 @@ const HotelDetail = () => {
     
     try {
 
-       // Limpiar la URL de dobles slashes y espacios
+       
     const cleanUrl = imageUrl.trim().replace(/\/+/g, '/')
 
-      // Si la URL ya es completa, usarla directamente
-      // Si ya es una URL completa, retornarla
+    
       if (cleanUrl.startsWith('http')) {
         return cleanUrl
       }
       
-      // Remover slash inicial si existe
+    
       const cleanPath = imageUrl.startsWith('/') ? imageUrl.slice(1) : imageUrl
       
-      // Construir URL completa
+      
       const baseUrl = 'https://hotels-api.academlo.tech'
       return `${baseUrl}/${cleanPath}`
     } catch (error) {
@@ -74,7 +73,7 @@ const HotelDetail = () => {
     const fetchData = async () => {
       try {
         setLoading(true)
-        // Fetch hotel details
+    
         const response = await axios.get(`/hotels/${id}`)
         console.log('Raw hotel data:', response.data)
 
@@ -82,7 +81,7 @@ const HotelDetail = () => {
           ...response.data,
           rating: Number(response.data.rating) || 0,
           price: Number(response.data.price) || 0,
-          // Transformar las imágenes si es necesario
+        
           images: Array.isArray(response.data.images) 
             ? response.data.images.map((img: any) => {
                 if (typeof img === 'string') {
@@ -135,7 +134,7 @@ const HotelDetail = () => {
         console.log('Transformed hotel data:', hotelData)
         setHotel(hotelData)
 
-        // Fetch other hotels in the same country
+
         const hotelsResponse = await axios.get('/hotels')
         const countryHotels = hotelsResponse.data
           .filter((h: HotelData) => 
@@ -357,6 +356,8 @@ const HotelDetail = () => {
               </div>
               <div className="p-4">
                 <h3 className="text-xl font-semibold mb-2">{otherHotel.name}</h3>
+
+                
                   {/* Usar StarRating aquí para cada hotel en la lista */}
                   <div className="flex items-center mb-2">
                   <StarRating rating={otherHotel.rating} />

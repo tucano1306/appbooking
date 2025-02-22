@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { FaStar } from 'react-icons/fa';
 import axios from '@/hooks/useAxios';
 
-// Define explícitamente las props del componente
 interface RatingModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -54,29 +53,32 @@ const RatingModal: React.FC<RatingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full m-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Rate your stay</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+      {/* Modal más pequeño con max-width reducido */}
+      <div className="bg-white rounded-lg p-4 max-w-sm w-full">
+        {/* Header más compacto */}
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-lg font-semibold">Rate your stay</h2>
           <button 
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 p-1"
           >
             ✕
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+          <div className="mb-3 p-2 bg-red-100 text-red-700 rounded text-sm">
             {error}
           </div>
         )}
 
-        <div className="mb-4">
+        {/* Imagen más pequeña */}
+        <div className="mb-3">
           <img 
             src={`https://hotels-api.academlo.tech/api/hotels/${hotelId}/image`}
             alt={hotelName}
-            className="w-full h-48 object-cover rounded"
+            className="w-full h-32 object-cover rounded"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = 'https://placehold.co/600x400/gray/white?text=Hotel+Image';
@@ -84,27 +86,30 @@ const RatingModal: React.FC<RatingModalProps> = ({
           />
         </div>
         
-        <div className="mb-4">
-          <h3 className="font-semibold text-lg">{hotelName}</h3>
-          <p className="text-sm text-gray-600">Reservation Days: {reservationDays}</p>
-          <p className="text-sm text-gray-600">Subtotal: ${subtotalPrice}</p>
+        {/* Información del hotel más compacta */}
+        <div className="mb-3">
+          <h3 className="font-semibold text-base">{hotelName}</h3>
+          <div className="flex justify-between text-xs text-gray-600">
+            <p>Reservation Days: {reservationDays}</p>
+            <p>Subtotal: ${subtotalPrice}</p>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm font-medium mb-2">Rating</label>
-            <div className="flex gap-2">
+            <label className="block text-sm font-medium mb-1">Rating</label>
+            <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((value) => (
                 <button
                   key={value}
                   type="button"
                   onClick={() => setRating(value)}
-                  className="focus:outline-none"
+                  className="focus:outline-none p-1"
                 >
                   <FaStar
-                    className={`w-6 h-6 ${
+                    className={`w-5 h-5 ${
                       value <= rating ? 'text-yellow-400' : 'text-gray-300'
-                    }`}
+                    } transition-colors`}
                   />
                 </button>
               ))}
@@ -112,12 +117,12 @@ const RatingModal: React.FC<RatingModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Comments</label>
+            <label className="block text-sm font-medium mb-1">Comments</label>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="w-full p-2 border rounded-md"
-              rows={4}
+              className="w-full p-2 border rounded-md text-sm"
+              rows={3}
               required
             />
           </div>
@@ -125,7 +130,7 @@ const RatingModal: React.FC<RatingModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors disabled:bg-red-300"
+            className="w-full bg-red-500 text-white py-1.5 px-3 rounded-md text-sm hover:bg-red-600 transition-colors disabled:bg-red-300"
           >
             {isSubmitting ? 'Submitting...' : 'Submit Review'}
           </button>

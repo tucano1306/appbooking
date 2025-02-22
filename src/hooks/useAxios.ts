@@ -1,4 +1,3 @@
-// src/hooks/useAxios.ts
 import axios from 'axios';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -9,7 +8,7 @@ const axiosInstance = axios.create({
   }
 });
 
-// Interceptor para agregar el token de autenticación
+
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;
@@ -23,7 +22,7 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Interceptor para logs (debugging)
+
 axiosInstance.interceptors.response.use(
   (response) => {
     console.log('API Response:', {

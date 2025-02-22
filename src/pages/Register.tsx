@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 
-// Esquema de validación con Zod
+
 const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
@@ -14,7 +14,7 @@ const registerSchema = z.object({
   gender: z.enum(['male', 'female', 'other'])
 })
 
-// Tipo inferido del esquema
+
 type RegisterData = z.infer<typeof registerSchema>
 
 const Register = () => {
@@ -22,7 +22,6 @@ const Register = () => {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // Hook form con validación de Zod
   const {
     register,
     handleSubmit,
@@ -31,24 +30,23 @@ const Register = () => {
     resolver: zodResolver(registerSchema)
   })
 
-  // Función que maneja el envío del formulario
+  
   const onSubmit = async (formData: RegisterData) => {
     try {
       setIsLoading(true)
       setError('')
       
-      // Estructura exacta que espera la API
       const userData = {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.toLowerCase().trim(),
         password: formData.password,
-        gender: 'other' // Campo requerido por la API
+        gender: 'other' 
       }
   
       console.log('Sending data:', userData)
       
-      // Asegúrate de que la URL sea exactamente esta
+      
       const response = await axios.post('https://hotels-api.academlo.tech/users', userData)
       console.log('Response:', response.data)
       
@@ -58,7 +56,7 @@ const Register = () => {
       console.error('Full error:', err)
       console.error('Error response:', err.response?.data)
       
-      // Manejo específico de errores
+    
       if (err.response?.data?.error === 'User already exists') {
         setError('Email already registered. Please try with a different email.')
       } else {

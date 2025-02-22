@@ -62,7 +62,7 @@ const Reservations = () => {
   }
 
   const calculateSubtotal = (days: number) => {
-    const pricePerNight = 487 // Precio por noche en USD
+    const pricePerNight = 487 
     return days * pricePerNight
   }
 
@@ -117,7 +117,7 @@ const Reservations = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-center mb-8">Mis Reservaciones</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {bookings.map((booking) => {
           const reservationDays = calculateReservationDays(booking.checkIn, booking.checkOut)
           const subtotal = calculateSubtotal(reservationDays)
@@ -125,34 +125,36 @@ const Reservations = () => {
           return (
             <div 
               key={booking.id} 
-              className="bg-white rounded-lg shadow-md overflow-hidden"
+              className="bg-white rounded-lg shadow-sm overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02] cursor-pointer"
             >
-              <img
-                src={getImageUrl(booking.hotel.image)}
-                alt={booking.hotel.name}
-                className="w-full h-48 object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement
-                  target.src = 'https://placehold.co/600x400/gray/white?text=Hotel+Image'
-                }}
-              />
-              <div className="p-4">
-                <h3 className="text-xl font-semibold mb-2">
+              <div className="relative h-36 overflow-hidden">
+                <img
+                  src={getImageUrl(booking.hotel.image)}
+                  alt={booking.hotel.name}
+                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement
+                    target.src = 'https://placehold.co/600x400/gray/white?text=Hotel+Image'
+                  }}
+                />
+              </div>
+              <div className="p-3">
+                <h3 className="text-lg font-semibold mb-1 truncate">
                   {booking.hotel.name}
                 </h3>
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 text-sm mb-2">
                   {booking.hotel.city.name}, {booking.hotel.city.country}
                 </p>
-                <div className="space-y-2 text-sm text-gray-600">
+                <div className="space-y-1 text-xs text-gray-600">
                   <p>Check-in: {new Date(booking.checkIn).toLocaleDateString()}</p>
                   <p>Check-out: {new Date(booking.checkOut).toLocaleDateString()}</p>
                   <p>Días de reserva: {reservationDays}</p>
-                  <p>Subtotal: ${subtotal}</p>
+                  <p className="font-semibold">Subtotal: ${subtotal}</p>
                 </div>
-                <div className="mt-4 space-y-2">
+                <div className="mt-3 space-y-2">
                   <button
                     onClick={() => handleDelete(booking.id)}
-                    className="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition-colors"
+                    className="w-full bg-red-500 text-white py-1.5 px-3 rounded text-sm transition-all duration-300 hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 hover:shadow-md"
                   >
                     Eliminar Reservación
                   </button>
@@ -161,7 +163,7 @@ const Reservations = () => {
                       setSelectedBooking(booking)
                       setIsRatingModalOpen(true)
                     }}
-                    className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+                    className="w-full bg-blue-500 text-white py-1.5 px-3 rounded text-sm transition-all duration-300 hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 hover:shadow-md"
                   >
                     Rate and comment this visit...
                   </button>

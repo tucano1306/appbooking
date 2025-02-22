@@ -3,7 +3,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import Layout from '../components/Layout'
 import ProtectedRoute from '../components/ProtectedRoute'
 
-// Lazy loading de componentes
+
 const Home = lazy(() => import('../pages/Home').then(module => ({ default: module.default })))
 const Login = lazy(() => import('../pages/Login').then(module => ({ default: module.default })))
 const Register = lazy(() => import('../pages/Register').then(module => ({ default: module.default })))
